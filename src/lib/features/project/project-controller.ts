@@ -9,6 +9,7 @@ import {
     type IUnleashConfig,
     NONE,
     serializeDates,
+    UPDATE_PROJECT,
 } from '../../types/index.js';
 import ProjectFeaturesController from '../feature-toggle/feature-toggle-controller.js';
 import ProjectEnvironmentsController from '../project-environments/project-environments-controller.js';
@@ -263,6 +264,25 @@ export default class ProjectController extends Controller {
             ],
         });
 
+        this.route({
+            method: 'post',
+            path: '/revive/:projectId',
+            handler: this.reviveProject,
+            permission: UPDATE_PROJECT,
+            acceptAnyContentType: true,
+            middleware: [
+                this.openApiService.validPath({
+                    tags: ['Unstable'],
+                    summary: 'Revive project',
+                    description: 'Revive the specified project from the archive.',
+                    operationId: 'reviveProject',
+                    responses: {
+                        200: emptyResponse,
+                        ...getStandardResponses(400, 401, 403),
+                    },
+                }),
+            ],
+        });
         this.use('/', new ProjectFeaturesController(config, services).router);
         this.use('/', new DependentFeaturesController(config, services).router);
         this.use(
@@ -310,32 +330,23 @@ export default class ProjectController extends Controller {
         res.status(200).end();
     }
 
+    async reviveProject(req: IAuthRequest<{
+        projectId: string;
+    }, any, any, any>, res: Response): Promise<void> {
+        const { projectId } = req.params;
+        await this.projectService.reviveProject(projectId, req.audit);
+        res.status(200).end();
+    }
+
     async getProjects(
         req: IAuthRequest,
         res: Response<ProjectsSchema>,
     ): Promise<void> {
         const { user } = req;
-        // const projects = await this.projectService.getProjects(
-        //     {
-        //         id: 'default',
-        //     },
-        //     user.id,
-        // );
-        const projects = await this.projectService.getProjects(
-            undefined,
-            user.id,
-        );
-
-
-        const projectsWithOwners =
-            await this.projectService.addOwnersToProjects(projects);
-
-        this.openApiService.respondWithValidation(
-            200,
-            res,
-            projectsSchema.$id,
-            { version: 1, projects: serializeDates(projectsWithOwners) },
-        );
+        const { archived } = req.query;
+        const projects = await this.projectService.getProjects({ archived: archived === true }, user.id);
+        const projectsWithOwners = await this.projectService.addOwnersToProjects(projects);
+        this.openApiService.respondWithValidation(200, res, projectsSchema.$id, { version: 1, projects: serializeDates(projectsWithOwners) });
     }
 
     async getProjectOverview(

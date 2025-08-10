@@ -254,7 +254,7 @@ export class AccessStore implements IAccessStore {
         
         stopTimer();
         const res = rows.map(this.mapUserPermission);
-        console.log("Res", res);
+        
         return res;
     }
 

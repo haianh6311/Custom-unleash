@@ -233,6 +233,8 @@ export default class ProjectService {
             userId,
         );
 
+        console.log("query", query);
+
         if (userId) {
             const projectAccess =
                 await this.privateProjectChecker.getUserAccessibleProjects(
