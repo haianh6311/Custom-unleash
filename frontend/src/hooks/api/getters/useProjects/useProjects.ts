@@ -7,7 +7,6 @@ import type { GetProjectsParams, ProjectsSchema } from 'openapi';
 
 const useProjects = (options: SWRConfiguration & GetProjectsParams = {}) => {
     const KEY = `api/admin/projects${options.archived ? '?archived=true' : ''}`;
-
     const fetcher = () => {
         const path = formatApiPath(KEY);
         return fetch(path, {
@@ -22,6 +21,9 @@ const useProjects = (options: SWRConfiguration & GetProjectsParams = {}) => {
         fetcher,
         options,
     );
+
+    console.log("data", data)
+
     const [loading, setLoading] = useState(!error && !data);
 
     const refetch = () => {

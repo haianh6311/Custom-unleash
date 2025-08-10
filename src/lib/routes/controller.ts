@@ -46,12 +46,14 @@ const checkPermission =
             Array.isArray(permission) ? permission : [permission]
         ).filter((p) => p !== NONE);
 
+    
         if (!permissions.length) {
             return next();
         }
         if (req.checkRbac && (await req.checkRbac(permissions))) {
             return next();
         }
+
         return res.status(403).json(new PermissionError(permissions)).end();
     };
 

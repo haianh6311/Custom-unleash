@@ -19,20 +19,24 @@ const useUiConfig = (): IUseUIConfigOutput => {
     const path = formatApiPath(`api/admin/ui-config`);
     const { data, error, mutate } = useSWR<IUiConfig>(path, fetcher);
 
-    const isOss = useCallback(() => {
-        return !data?.versionInfo?.current?.enterprise;
-    }, [data]);
+    // const isOss = useCallback(() => {
+    //     return !data?.versionInfo?.current?.enterprise;
+    // }, [data]);
+
+    const isOss = () => false;
 
     const isPro = useCallback(() => {
         return data?.environment?.toLowerCase() === 'pro';
     }, [data]);
 
-    const isEnterprise = useCallback(() => {
-        return (
-            data?.environment?.toLowerCase() !== 'pro' &&
-            Boolean(data?.versionInfo?.current?.enterprise)
-        );
-    }, [data]);
+    // const isEnterprise = useCallback(() => {
+    //     return (
+    //         data?.environment?.toLowerCase() !== 'pro' &&
+    //         Boolean(data?.versionInfo?.current?.enterprise)
+    //     );
+    // }, [data]);
+
+    const isEnterprise = () => true;
 
     const uiConfig: IUiConfig = useMemo(() => {
         return {

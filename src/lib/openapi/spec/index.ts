@@ -228,6 +228,8 @@ export * from './variant-flag-schema.js';
 export * from './variant-schema.js';
 export * from './variants-schema.js';
 export * from './version-schema.js';
+export * from "./project-created-schema.js"
+export * from "./create-project-schema.js"
 /**
  * Auto-generated file by update-openapi-spec-list.js. Do not edit.
  * To run it manually execute `yarn schema:update` or `node .husky/update-openapi-spec-list.js`

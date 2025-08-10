@@ -54,6 +54,9 @@ export const ProjectList = () => {
         state.query,
         state.sortBy,
     );
+
+    console.log("Project", projects);
+    console.log("isOss", isOss());
     const groupedProjects = useGroupedProjects(
         sortedProjects,
         myProfileProjects,

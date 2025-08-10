@@ -251,8 +251,11 @@ export class AccessStore implements IAccessStore {
                 .andWhere('gu.user_id', '=', userId);
         });
         const rows = await userPermissionQuery;
+        
         stopTimer();
-        return rows.map(this.mapUserPermission);
+        const res = rows.map(this.mapUserPermission);
+        console.log("Res", res);
+        return res;
     }
 
     mapUserPermission(row: IPermissionRow): IUserPermission {

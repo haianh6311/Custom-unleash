@@ -647,17 +647,21 @@ export function createConfig(options: IUnleashOptions): IUnleashConfig {
 
     const prometheusApi = options.prometheusApi || process.env.PROMETHEUS_API;
 
-    const isEnterprise =
-        Boolean(options.enterpriseVersion) &&
-        ui.environment?.toLowerCase() !== 'pro';
+    // const isEnterprise =
+    //     Boolean(options.enterpriseVersion) &&
+    //     ui.environment?.toLowerCase() !== 'pro';
+
+    const isEnterprise = true;
 
     const isTest = process.env.NODE_ENV === 'test';
-    const isOss = resolveIsOss(
-        isEnterprise,
-        options.isOss,
-        ui.environment,
-        isTest,
-    );
+    // const isOss = resolveIsOss(
+    //     isEnterprise,
+    //     options.isOss,
+    //     ui.environment,
+    //     isTest,
+    // );
+
+    const isOss = false;
 
     const session: ISessionOption = mergeAll([
         defaultSessionOption(isEnterprise),

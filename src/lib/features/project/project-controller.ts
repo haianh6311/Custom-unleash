@@ -1,6 +1,7 @@
 import type { Response } from 'express';
 import Controller from '../../routes/controller.js';
 import {
+    CREATE_PROJECT,
     type IArchivedQuery,
     type IFlagResolver,
     type IProjectParam,
@@ -15,6 +16,7 @@ import type ProjectService from './project-service.js';
 import VariantsController from '../../routes/admin-api/project/variants.js';
 import {
     createResponseSchema,
+    createRequestSchema,
     outdatedSdksSchema,
     type OutdatedSdksSchema,
     type ProjectDoraMetricsSchema,
@@ -22,6 +24,7 @@ import {
     projectOverviewSchema,
     type ProjectsSchema,
     projectsSchema,
+    resourceCreatedResponseSchema,
 } from '../../openapi/index.js';
 import { getStandardResponses } from '../../openapi/util/standard-responses.js';
 import type { IUnleashServices, OpenApiService } from '../../services/index.js';
@@ -46,6 +49,9 @@ import {
 } from '../../openapi/spec/project-flag-creators-schema.js';
 import ProjectStatusController from '../project-status/project-status-controller.js';
 import FeatureLinkController from '../feature-links/feature-link-controller.js';
+import { createConfig } from '../../create-config.js';
+import { CreateProjectSchema } from '../../openapi/spec/create-project-schema.js';
+import { ProjectCreatedSchema, projectCreatedSchema } from '../../openapi/spec/project-created-schema.js';
 
 export default class ProjectController extends Controller {
     private projectService: ProjectService;
@@ -63,6 +69,26 @@ export default class ProjectController extends Controller {
         this.openApiService = services.openApiService;
         this.flagResolver = config.flagResolver;
 
+        this.route({
+            method: 'post',
+            path: '',
+            handler: this.createProject,
+            permission: CREATE_PROJECT,
+            middleware: [
+                this.openApiService.validPath({
+                    tags: ['Projects'],
+                    operationId: 'createProject',
+                    summary: 'Create project',
+                    description: 'Create a new [Unleash project](https://docs.getunleash.io/reference/projects).',
+                    requestBody: createRequestSchema('createProjectSchema'),
+                    responses: {
+                        201: resourceCreatedResponseSchema('projectCreatedSchema'),
+                        ...getStandardResponses(400, 401, 403, 415),
+                    },
+                }),
+            ],
+        });
+        
         this.route({
             path: '',
             method: 'get',
@@ -212,17 +238,37 @@ export default class ProjectController extends Controller {
         this.use('/', new FeatureLinkController(config, services).router);
     }
 
+    async createProject(req: IAuthRequest<any, any, CreateProjectSchema>, res: Response<ProjectCreatedSchema>): Promise<void> {
+        const data = req.body;
+        const { user, audit } = req;
+        const { id, name, description, defaultStickiness, mode, environments, changeRequestEnvironments, } = await this.projectService.createProject(data, user, audit);
+        this.openApiService.respondWithValidation(201, res, projectCreatedSchema.$id, {
+            id,
+            name,
+            description,
+            defaultStickiness,
+            mode,
+            environments,
+            changeRequestEnvironments,
+        }, { location: `projects/${id}` });
+    }
+
     async getProjects(
         req: IAuthRequest,
         res: Response<ProjectsSchema>,
     ): Promise<void> {
         const { user } = req;
+        // const projects = await this.projectService.getProjects(
+        //     {
+        //         id: 'default',
+        //     },
+        //     user.id,
+        // );
         const projects = await this.projectService.getProjects(
-            {
-                id: 'default',
-            },
+            undefined,
             user.id,
         );
+
 
         const projectsWithOwners =
             await this.projectService.addOwnersToProjects(projects);
