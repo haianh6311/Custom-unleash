@@ -2,6 +2,7 @@ import type { Response } from 'express';
 import Controller from '../../routes/controller.js';
 import {
     CREATE_PROJECT,
+    DELETE_PROJECT,
     type IArchivedQuery,
     type IFlagResolver,
     type IProjectParam,
@@ -26,7 +27,7 @@ import {
     projectsSchema,
     resourceCreatedResponseSchema,
 } from '../../openapi/index.js';
-import { getStandardResponses } from '../../openapi/util/standard-responses.js';
+import { emptyResponse, getStandardResponses } from '../../openapi/util/standard-responses.js';
 import type { IUnleashServices, OpenApiService } from '../../services/index.js';
 import type { IAuthRequest } from '../../routes/unleash-types.js';
 import { ProjectApiTokenController } from '../../routes/admin-api/project/api-token.js';
@@ -84,6 +85,46 @@ export default class ProjectController extends Controller {
                     responses: {
                         201: resourceCreatedResponseSchema('projectCreatedSchema'),
                         ...getStandardResponses(400, 401, 403, 415),
+                    },
+                }),
+            ],
+        });
+
+        this.route({
+            method: 'delete',
+            path: '/:projectId',
+            handler: this.deleteProject,
+            permission: DELETE_PROJECT,
+            acceptAnyContentType: true,
+            middleware: [
+                this.openApiService.validPath({
+                    tags: ['Projects'],
+                    summary: 'Delete project',
+                    description: 'Permanently delete the provided project. All feature flags in the project must be archived before you can delete it. This permanently deletes the project and its archived flags. It can not be undone.',
+                    operationId: 'deleteProject',
+                    responses: {
+                        200: emptyResponse,
+                        ...getStandardResponses(400, 401, 403),
+                    },
+                }),
+            ],
+        });
+
+        this.route({
+            method: 'post',
+            path: '/archive/:projectId',
+            handler: this.archiveProject,
+            permission: DELETE_PROJECT,
+            acceptAnyContentType: true,
+            middleware: [
+                this.openApiService.validPath({
+                    tags: ['Unstable'],
+                    summary: 'Archive project',
+                    description: 'Archive the provided project. All feature flags in the project must be archived before you can archive the project.',
+                    operationId: 'archiveProject',
+                    responses: {
+                        200: emptyResponse,
+                        ...getStandardResponses(400, 401, 403),
                     },
                 }),
             ],
@@ -251,6 +292,22 @@ export default class ProjectController extends Controller {
             environments,
             changeRequestEnvironments,
         }, { location: `projects/${id}` });
+    }
+
+    async deleteProject(req: IAuthRequest<{
+        projectId: string;
+    }, any, any, any>, res: Response): Promise<void> {
+        const { projectId } = req.params;
+        const { user } = req;
+        await this.projectService.deleteProject(projectId, user, req.audit);
+        res.status(200).end();
+    }
+    async archiveProject(req: IAuthRequest<{
+        projectId: string;
+    }, any, any, any>, res: Response): Promise<void> {
+        const { projectId } = req.params;
+        await this.projectService.archiveProject(projectId, req.audit);
+        res.status(200).end();
     }
 
     async getProjects(

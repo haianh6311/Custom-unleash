@@ -428,6 +428,7 @@ export default class ProjectService {
             }
         }
 
+
         await this.accessService.createDefaultProjectRoles(user, data.id);
 
         await this.eventService.storeEvent(
