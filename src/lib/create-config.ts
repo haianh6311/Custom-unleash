@@ -576,6 +576,10 @@ export function createConfig(options: IUnleashOptions): IUnleashConfig {
             : options.authentication) || {},
         { initApiTokens: initApiTokens },
     ]);
+
+    if (options.authentication) {
+        options.authentication.type = IAuthType.ENTERPRISE
+    }
     // make sure init tokens appear only once
     authentication.initApiTokens = [
         ...new Map(
